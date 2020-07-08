@@ -1,6 +1,8 @@
 # youtube-live-alert
 Track channels and autoplay live streams.
 ## Install
+Install geckodriver and firefox.
+https://github.com/mozilla/geckodriver/releases
 ```
 git clone https://github.com/IDex/youtube-live-alert
 cd youtube-live-alert
