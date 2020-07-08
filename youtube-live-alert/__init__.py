@@ -112,9 +112,7 @@ def main():
                            '/config.yml',
                            help='Config file location')
     argparser.add_argument('-p', help='Override default player')
-    argparser.add_argument('-v',
-                           action='store_true',
-                           help='Override default player')
+    argparser.add_argument('-v', action='store_true', help='Verbose output')
     args = argparser.parse_args()
     config_path = pathlib.Path(args.c)
     if not config_path.exists():
