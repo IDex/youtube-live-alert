@@ -1,17 +1,19 @@
 #!/usr/bin/env python
 # coding: utf-8
-from selenium.webdriver import Firefox
-from selenium.webdriver.firefox.options import Options
+import argparse
 import concurrent.futures
 import logging
-from munch import Munch
-from appdirs import user_config_dir
-import yaml
-import argparse
+import pathlib
+import re
+import subprocess
 import time
 import webbrowser
-import subprocess
-import pathlib
+
+import yaml
+from appdirs import user_config_dir
+from munch import Munch
+from selenium.webdriver import Firefox
+from selenium.webdriver.firefox.options import Options
 
 
 def catch(func):
@@ -86,10 +88,16 @@ class YoutubeLiveAlert:
         return new
 
     def play(self, url, player):
+        if self.config.separate_chat:
+            video_id = re.findall(r'v=(.*)', url)[0]
+            webbrowser.open_new(f'https://www.youtube.com/live_chat?is_popout=1&v={video_id}')
         if player == 'browser':
             webbrowser.open(url)
         else:
-            subprocess.run([player, url])
+            if self.config.single_stream:
+                subprocess.run([player, url])
+            else:
+                subprocess.Popen([player, url])
 
     def run(self):
         if self.config.only_new:
@@ -123,6 +131,8 @@ def main():
 settings:
   player: browser # How to play found streams
   concurrent: 5 # How many concurrent selenium instances to use for checking
+  separate_chat: true # Open the chat in a separate window
+  single_stream: true # Play only a single stream at a time, applies only to non-browser player
   wait: 60 # How long to wait between checks
   verbose: true # Show more output
   only_new: false # Ignore already running streams
