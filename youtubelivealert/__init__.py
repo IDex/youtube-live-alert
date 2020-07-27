@@ -90,7 +90,8 @@ class YoutubeLiveAlert:
     def play(self, url, player):
         if self.config.separate_chat:
             video_id = re.findall(r'v=(.*)', url)[0]
-            webbrowser.open_new(f'https://www.youtube.com/live_chat?is_popout=1&v={video_id}')
+            webbrowser.open_new(
+                f'https://www.youtube.com/live_chat?is_popout=1&v={video_id}')
         if player == 'browser':
             webbrowser.open(url)
         else:
@@ -127,6 +128,7 @@ def main():
         logging.warning(
             f'Config file does not exits. Attempting to create one at {config_path}'
         )
+        config_path.parent.mkdir(exist_ok=True, parents=True)
         config_path.write_text("""\
 settings:
   player: browser # How to play found streams
