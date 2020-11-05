@@ -21,7 +21,7 @@ def catch(func):
         try:
             return func(*args, **kwargs)
         except Exception as e:
-            logging.info(e)
+            logging.info(e, exc_info=True)
 
     return wrapper
 
@@ -48,30 +48,34 @@ class YoutubeLiveAlert:
         Alternative shortened: //text()[contains(.,'LIVE NOW')]/ancestor::*[@id='details']/descendant::a[@id='video-title']
         """
         d = Firefox(options=self.opt)
+        logging.info(f'Checking {u}')
         d.get(u)
+        time.sleep(5)
         title = d.title
-        texts = ['LIVE NOW', 'PREMIERING NOW']
+        texts = ['LIVE', 'PREMIERING NOW']
         for text in texts:
+            # q = f"//text()[contains(.,'{text}')]/ancestor::*[@id='thumbnail']"  # Applies to planned
+            q = f"//ytd-thumbnail-overlay-time-status-renderer[@overlay-style='{text}']/ancestor::*[@id='thumbnail']"  # Applies to currently live
             try:
-                link = d.find_element_by_xpath(
-                    f"//text()[contains(.,'{text}')]/parent::*/parent::*/parent::*/parent::*/descendant::a[@id='video-title'][1]"
-                ).get_attribute('href')
+                link = d.find_element_by_xpath(q)
+                link = link.get_attribute('href')
             except Exception as e:
+                logging.info(e)
                 link = None
             if link: break
         source = d.page_source
         if link:
-            logging.debug(
-                f'Is the text inside link: {">LIVE NOW<" in d.page_source}, do we have a link: {link}'
-            )
-        result = Munch(title=title, link=link, source=source)
+            logging.info(f'Found a link: {link} on channel: {title}')
+        result = Munch(title=title, link=link)
         d.quit()
+        logging.info(f'Finished checking {u}: {result}')
         return result
 
     def check_new(self):
         tasks = Munch()
         new = set()
         for channel, url in self.channels.items():
+            logging.info(f'Checking channel {channel}')
             x = self.thread_pool.submit(self.get_urls, url)
             tasks[x] = channel
         results = dict()
@@ -104,7 +108,7 @@ class YoutubeLiveAlert:
         if self.config.only_new:
             self.check_new()
         while True:
-            # logging.info(f'Going over channels')
+            logging.info(f'Going over channels')
             new = self.check_new()
             for url in new:
                 logging.info(f'Found new links: {new}')
@@ -142,6 +146,7 @@ channels:
   placeholder: https://www.youtube.com/channel/UC4R8DWoMoI7CAwX8_LjQHig
 """)
 
+    logging.info(f'Starting alert')
     yla = YoutubeLiveAlert(config=args.c, player=args.p, verbose=args.v)
     yla.run()
 
